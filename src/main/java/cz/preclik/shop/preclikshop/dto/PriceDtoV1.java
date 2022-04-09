@@ -10,4 +10,5 @@ public record PriceDtoV1(
         @Null Integer id,
         @NotNull Double amount,
         @NotNull Price.Currency currency,
-        @NotNull Date validFrom) { }
+        @NotNull Date validFrom) {
+}
