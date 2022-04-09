@@ -8,8 +8,8 @@ import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;
 import cz.preclik.shop.preclikshop.jpa.EOrderProductRepository;
 import cz.preclik.shop.preclikshop.jpa.EOrderRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -32,7 +32,6 @@ public class EOrderServiceV1 {
         this.productRepository = productRepository;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     public EOrderDtoV1 create(final List<EOrderProductDtoV1> products) {
         EOrder entity = new EOrder(null, new Date(), EOrder.OrderState.OPEN, null);
         EOrder order = eOrderRepository.save(entity);
@@ -47,8 +46,12 @@ public class EOrderServiceV1 {
     public void finishOrder(final Long id, final EOrder.OrderState orderState) throws OrderClosedException {
         EOrder eOrder = eOrderRepository.findById(id).orElseThrow();
 
+        finishOrder(eOrder, orderState);
+    }
+
+    public void finishOrder(final EOrder eOrder, final EOrder.OrderState orderState) throws OrderClosedException {
         if(eOrder.getOrderState().isClosed()) {
-            throw new OrderClosedException(id);
+            throw new OrderClosedException(eOrder.getId());
         }
 
         eOrderProductRepository.findAllByEOrder(eOrder)
@@ -56,6 +59,18 @@ public class EOrderServiceV1 {
         eOrder.setOrderState(orderState);
 
         eOrderRepository.save(eOrder);
+    }
+
+    public void finishExpired() {
+        eOrderRepository.findAllToBeSetAsExpirate(DateUtils.addMinutes(new Date(), 30), EOrder.OrderState.OPEN)
+                .forEach(eOrder -> {
+                    try {
+                        finishOrder(eOrder, EOrder.OrderState.EXPIRED);
+                    } catch (OrderClosedException e) {
+                        e.printStackTrace();
+                    }
+                });
+
     }
 
     public void edit(final Long id, final Long productId, final Integer count) throws NegativeQuantityOfProductException {
