@@ -47,3 +47,6 @@ CREATE INDEX e_order_product_e_order_idx ON e_order_product(e_order_id);
 create sequence e_order_id_seq start with 1 increment by 1;
 create sequence e_order_product_id_seq start with 1 increment by 1;
 create sequence product_id_seq start with 1 increment by 1;
+
+--changeset master:7
+create sequence price_id_seq start with 1 increment by 1;
