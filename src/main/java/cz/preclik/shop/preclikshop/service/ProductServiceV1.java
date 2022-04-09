@@ -25,15 +25,49 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
     }
 
     public ProductDtoV1 add(final ProductDtoV1 productDto) {
-        Product product = productRepository.save(new Product(null, productDto.name(), productDto.description(),
-                productDto.available(), null, null));
+        Product product = productRepository.save(productFromDto(productDto));
         priceRepository.save(fromDto(productDto, product));
 
         return mapToDto(product);
     }
 
+    public ProductDtoV1 edit(final ProductDtoV1 productDto, final Integer id) {
+        Product product = productRepository.findById(id).orElseThrow();
+        Price price = priceRepository.save(fromDto(productDto, product));
+
+        update(productDto, product, price);
+        return mapToDto(product);
+    }
+
     public void remove(final Integer id) {
-        productRepository.deleteById(id);
+        productRepository.setAvailable(false, id);
+    }
+
+    public void increase(final Integer id, final Integer quantity) {
+        productRepository.increaseQuantity(quantity, id);
+    }
+
+    public void decrease(final Integer id, final Integer quantity) throws NegativeQuantityOfProductException {
+        Product product = productRepository.findById(id).orElseThrow();
+
+        if ((product.getQuantity() - quantity) < 0) {
+            throw new NegativeQuantityOfProductException(id);
+        }
+
+        product.setQuantity(product.getQuantity() - quantity);
+        productRepository.save(product);
+    }
+
+    private void update(ProductDtoV1 productDto, Product product, Price price) {
+        product.setName(productDto.name());
+        product.setDescription(productDto.description());
+        product.setAvailable(productDto.available());
+        product.getPrices().add(price);
+    }
+
+    private Product productFromDto(final ProductDtoV1 productDto) {
+        return new Product(null, productDto.name(), productDto.description(),
+                productDto.available(), productDto.quantity(), null, null);
     }
 
     private Price fromDto(final ProductDtoV1 productDto, final Product product) {
@@ -45,6 +79,6 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
         Price price = priceRepository.findFirstByProductEqualsOrderByValidFromDesc(product);
         PriceDtoV1 priceDto = new PriceDtoV1(price.getId(), price.getAmount(), price.getCurrency(), price.getValidFrom());
 
-        return new ProductDtoV1(product.getId(), product.getName(), product.getDescription(), product.getAvailable(), priceDto);
+        return new ProductDtoV1(product.getId(), product.getName(), product.getDescription(), product.getAvailable(), product.getQuantity(), priceDto);
     }
 }

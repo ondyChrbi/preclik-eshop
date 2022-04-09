@@ -22,6 +22,8 @@ public class Product {
     private String description;
     @Column
     private Boolean available;
+    @Column
+    private Integer quantity;
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
     private Collection<Price> prices;
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
