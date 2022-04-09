@@ -4,7 +4,8 @@
 CREATE TABLE product(
   id int auto_increment primary key,
   name varchar(256),
-  description varchar(1024)
+  description varchar(1024),
+  available boolean not null default true
 );
 
 CREATE INDEX product_name_idx ON product(name);

@@ -5,16 +5,18 @@ import java.util.Date;
 
 @Entity
 @Table(name = "Activity", indexes = {@Index(name = "activity_product_idx", columnList = "product_id")})
-public record Activity(
-        @Id Long id,
-        @Enumerated(EnumType.STRING) ActivityType activityType,
-        @Column Integer amount,
-        @Column Date creationDate,
-        @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "product_id", nullable = false) Product product) {
-
-    public Activity() {
-        this(null, null, null, null, null);
-    }
+public class Activity {
+    @Id
+    private Long id;
+    @Enumerated(EnumType.STRING)
+    private ActivityType activityType;
+    @Column
+    private Integer amount;
+    @Column
+    private Date creationDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
 
     public enum ActivityType {
         ADD, INCREASE, DECREASE, RESERVE
