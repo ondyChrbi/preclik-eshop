@@ -10,11 +10,13 @@ import java.util.Date;
 
 @Entity
 @Table(name = "e_order")
+@SequenceGenerator(name = "e_order_id_seq", sequenceName = "e_order_id_seq", allocationSize = 1)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class EOrder {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "e_order_id_seq")
     private Long id;
     @Column
     private Date creationDate;
@@ -25,6 +27,16 @@ public class EOrder {
     private Collection<EOrderProduct> eOrderProducts;
 
     public enum OrderState{
-        OPEN, FINISH, CANCEL
+        OPEN(false), FINISH(true), CANCEL(true), EXPIRED(true);
+
+        final boolean closed;
+
+        OrderState(final boolean closed) {
+            this.closed = closed;
+        }
+
+        public boolean isClosed() {
+            return closed;
+        }
     }
 }

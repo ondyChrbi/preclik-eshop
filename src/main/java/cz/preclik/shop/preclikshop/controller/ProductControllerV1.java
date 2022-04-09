@@ -25,7 +25,7 @@ public class ProductControllerV1 {
     }
 
     @GetMapping("/{id}")
-    public ProductDtoV1 findById(@PathVariable("id") final Integer id) {
+    public ProductDtoV1 findById(@PathVariable("id") final Long id) {
         return productService.findById(id);
     }
 
@@ -35,7 +35,7 @@ public class ProductControllerV1 {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductDtoV1> edit(@RequestBody @Validated final ProductDtoV1 product, @PathVariable("id") final Integer id) {
+    public ResponseEntity<ProductDtoV1> edit(@RequestBody @Validated final ProductDtoV1 product, @PathVariable("id") final Long id) {
         return ResponseEntity.ok(productService.edit(product, id));
     }
 
@@ -47,21 +47,21 @@ public class ProductControllerV1 {
     }
 
     @PostMapping("/{id}/quantity/{quantity}")
-    public ResponseEntity<HttpStatus> increaseQuantity(@PathVariable("id") final Integer id, @PathVariable("quantity") final Integer quantity){
-        productService.increase(id, quantity);
+    public ResponseEntity<HttpStatus> increaseQuantity(@PathVariable("id") final Long id, @PathVariable("quantity") final Integer quantity){
+        productService.increaseQuantity(id, quantity);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
     @DeleteMapping("/{id}/quantity/{count}")
-    public ResponseEntity<HttpStatus> decreaseQuantity(@PathVariable("id") final Integer id, @PathVariable("count") final Integer count) throws NegativeQuantityOfProductException {
-        productService.decrease(id, count);
+    public ResponseEntity<HttpStatus> decreaseQuantity(@PathVariable("id") final Long id, @PathVariable("count") final Integer count) throws NegativeQuantityOfProductException {
+        productService.decreaseQuantity(id, count);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
     @ExceptionHandler(value = NegativeQuantityOfProductException.class)
     private ResponseEntity<?> resourceNotFoundException(final Exception exception) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
     }
 }

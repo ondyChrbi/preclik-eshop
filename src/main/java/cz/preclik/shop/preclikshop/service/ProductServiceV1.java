@@ -1,5 +1,6 @@
 package cz.preclik.shop.preclikshop.service;
 
+import cz.preclik.shop.preclikshop.domain.EOrderProduct;
 import cz.preclik.shop.preclikshop.domain.Price;
 import cz.preclik.shop.preclikshop.domain.Product;
 import cz.preclik.shop.preclikshop.dto.PriceDtoV1;
@@ -20,7 +21,7 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
                 .collect(Collectors.toList());
     }
 
-    public ProductDtoV1 findById(final Integer id) {
+    public ProductDtoV1 findById(final Long id) {
         return mapToDto(productRepository.getById(id));
     }
 
@@ -31,7 +32,7 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
         return mapToDto(product);
     }
 
-    public ProductDtoV1 edit(final ProductDtoV1 productDto, final Integer id) {
+    public ProductDtoV1 edit(final ProductDtoV1 productDto, final Long id) {
         Product product = productRepository.findById(id).orElseThrow();
         Price price = priceRepository.save(fromDto(productDto, product));
 
@@ -43,11 +44,15 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
         productRepository.setAvailable(false, id);
     }
 
-    public void increase(final Integer id, final Integer quantity) {
+    public void increaseQuantity(final Long id, final Integer quantity) {
         productRepository.increaseQuantity(quantity, id);
     }
 
-    public void decrease(final Integer id, final Integer quantity) throws NegativeQuantityOfProductException {
+    public void increaseQuantity(final EOrderProduct eOrderProduct) {
+        increaseQuantity(eOrderProduct.getProduct().getId(), eOrderProduct.getQuantity());
+    }
+
+    public void decreaseQuantity(final Long id, final Integer quantity) throws NegativeQuantityOfProductException {
         Product product = productRepository.findById(id).orElseThrow();
 
         if ((product.getQuantity() - quantity) < 0) {
@@ -56,6 +61,15 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
 
         product.setQuantity(product.getQuantity() - quantity);
         productRepository.save(product);
+    }
+
+    public void editQuantity(Long productId, Integer quantity) throws NegativeQuantityOfProductException {
+        if(quantity < 0) {
+            decreaseQuantity(productId, quantity);
+        }
+        if(quantity > 0) {
+            increaseQuantity(productId, quantity);
+        }
     }
 
     private void update(ProductDtoV1 productDto, Product product, Price price) {

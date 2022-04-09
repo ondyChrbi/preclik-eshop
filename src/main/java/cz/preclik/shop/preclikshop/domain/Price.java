@@ -15,7 +15,7 @@ import java.util.Date;
 public class Price {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
     @Column
     private Double amount;
     @Enumerated(EnumType.STRING)

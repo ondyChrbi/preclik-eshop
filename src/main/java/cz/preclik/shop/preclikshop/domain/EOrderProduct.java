@@ -8,14 +8,16 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "e_order_product", indexes = {
-        @Index(name = "EORDER_PRODUCT_IDX", columnList = "product_id"),
-        @Index(name = "EORDER_PRODUCT_ACTIVITY_IDX", columnList = "e_order_id")
+        @Index(name = "e_order_product_idx", columnList = "product_id"),
+        @Index(name = "e_order_product_e_order_idx", columnList = "e_order_id")
 })
+@SequenceGenerator(name = "e_order_product_id_seq", sequenceName = "e_order_product_id_seq", allocationSize = 1)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class EOrderProduct {
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "e_order_id_seq")
     private Long id;
     @Column
     private Integer quantity;

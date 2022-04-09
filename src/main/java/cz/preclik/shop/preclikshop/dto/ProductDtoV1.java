@@ -8,7 +8,7 @@ import javax.validation.constraints.Null;
 import javax.validation.constraints.Positive;
 
 public record ProductDtoV1(
-        @Null Integer id,
+        @Null Long id,
         @NotBlank @NotNull String name,
         @Nullable String description,
         @NotNull Boolean available,

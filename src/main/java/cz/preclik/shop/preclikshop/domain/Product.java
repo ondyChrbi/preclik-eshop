@@ -9,13 +9,14 @@ import java.util.Collection;
 
 @Entity
 @Table(name = "product", indexes = {@Index(name = "product_name_idx", columnList = "name")})
+@SequenceGenerator(name = "product_id_seq", sequenceName = "product_id_seq", allocationSize = 1)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class Product {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "product_id_seq")
+    private Long id;
     @Column
     private String name;
     @Column
