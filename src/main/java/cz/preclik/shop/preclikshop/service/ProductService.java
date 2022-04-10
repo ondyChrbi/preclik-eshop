@@ -2,6 +2,7 @@ package cz.preclik.shop.preclikshop.service;
 
 import cz.preclik.shop.preclikshop.domain.EOrderProduct;
 import cz.preclik.shop.preclikshop.domain.Product;
+import cz.preclik.shop.preclikshop.dto.ProductDtoIdV1;
 import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
 import org.springframework.data.domain.Pageable;
@@ -30,7 +31,7 @@ public interface ProductService {
      * @param productDto new product to be added.
      * @return added product with id.
      */
-    ProductDtoV1 add(ProductDtoV1 productDto);
+    ProductDtoIdV1 add(ProductDtoV1 productDto);
 
     /**
      * Edit product.
@@ -39,7 +40,7 @@ public interface ProductService {
      * @param id         product id.
      * @return updated product.
      */
-    ProductDtoV1 edit(ProductDtoV1 productDto, Long id);
+    ProductDtoIdV1 edit(ProductDtoIdV1 productDto, Long id);
 
     /**
      * Remove product.
@@ -94,5 +95,5 @@ public interface ProductService {
      *
      * @return entity as dto.
      * */
-    ProductDtoV1 mapToDto(Product product);
+    ProductDtoIdV1 mapToDto(Product product);
 }

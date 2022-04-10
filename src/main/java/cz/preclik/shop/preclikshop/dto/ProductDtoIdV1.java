@@ -2,11 +2,10 @@ package cz.preclik.shop.preclikshop.dto;
 
 import org.springframework.lang.Nullable;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.PositiveOrZero;
+import javax.validation.constraints.*;
 
-public record ProductDtoV1(
+public record ProductDtoIdV1(
+        @Null Long id,
         @NotBlank @NotNull String name,
         @Nullable String description,
         @NotNull Boolean available,

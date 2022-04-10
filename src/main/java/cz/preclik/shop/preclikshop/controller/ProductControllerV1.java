@@ -2,12 +2,12 @@ package cz.preclik.shop.preclikshop.controller;
 
 import cz.preclik.shop.preclikshop.annotation.v1.product.*;
 import cz.preclik.shop.preclikshop.domain.Product;
+import cz.preclik.shop.preclikshop.dto.ProductDtoIdV1;
 import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
 import cz.preclik.shop.preclikshop.service.ProductServiceV1;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.hateoas.MediaTypes;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -25,7 +25,8 @@ public class ProductControllerV1 {
     }
 
     @GetMapping("")
-    public ResponseEntity<PagedModel<Product>> findAll(Pageable pageable) {
+    @FindAllProductsEndpoint
+    public ResponseEntity findAll(Pageable pageable) {
         return ResponseEntity.ok()
                 .contentType(MediaTypes.HAL_JSON)
                 .body(productService.findAll(pageable));
@@ -39,13 +40,13 @@ public class ProductControllerV1 {
 
     @PostMapping("")
     @AddProductEndpoint
-    public ResponseEntity<ProductDtoV1> add(@RequestBody @Validated final ProductDtoV1 product) {
+    public ResponseEntity<ProductDtoIdV1> add(@RequestBody @Validated final ProductDtoV1 product) {
         return ResponseEntity.ok(productService.add(product));
     }
 
     @PutMapping("/{id}")
     @EditProductEndpoint
-    public ResponseEntity<ProductDtoV1> edit(@RequestBody @Validated final ProductDtoV1 product, @PathVariable("id") final Long id) {
+    public ResponseEntity<ProductDtoIdV1> edit(@RequestBody @Validated final ProductDtoIdV1 product, @PathVariable("id") final Long id) {
         return ResponseEntity.ok(productService.edit(product, id));
     }
 

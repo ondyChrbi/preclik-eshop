@@ -5,6 +5,7 @@ import cz.preclik.shop.preclikshop.domain.EOrderProduct;
 import cz.preclik.shop.preclikshop.domain.Price;
 import cz.preclik.shop.preclikshop.domain.Product;
 import cz.preclik.shop.preclikshop.dto.PriceDtoV1;
+import cz.preclik.shop.preclikshop.dto.ProductDtoIdV1;
 import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
 import cz.preclik.shop.preclikshop.jpa.PriceRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
@@ -45,7 +46,7 @@ public class ProductServiceV1 implements ProductService {
     }
 
     @Override
-    public ProductDtoV1 add(final ProductDtoV1 productDto) {
+    public ProductDtoIdV1 add(final ProductDtoV1 productDto) {
         Product product = productRepository.save(productFromDto(productDto));
         priceRepository.save(priceFromDto(productDto, product));
 
@@ -53,7 +54,7 @@ public class ProductServiceV1 implements ProductService {
     }
 
     @Override
-    public ProductDtoV1 edit(final ProductDtoV1 productDto, final Long id) {
+    public ProductDtoIdV1 edit(final ProductDtoIdV1 productDto, final Long id) {
         Product product = productRepository.findById(id).orElseThrow();
         Price price = priceRepository.save(priceFromDto(productDto, product));
 
@@ -104,11 +105,11 @@ public class ProductServiceV1 implements ProductService {
     }
 
     @Override
-    public ProductDtoV1 mapToDto(final Product product) {
+    public ProductDtoIdV1 mapToDto(final Product product) {
         Price price = priceRepository.findFirstByProductEqualsOrderByValidFromDesc(product);
         PriceDtoV1 priceDto = new PriceDtoV1(price.getId(), price.getAmount(), price.getCurrency(), price.getValidFrom());
 
-        return new ProductDtoV1(product.getId(), product.getName(), product.getDescription(), product.getAvailable(), product.getQuantity(), priceDto);
+        return new ProductDtoIdV1(product.getId(), product.getName(), product.getDescription(), product.getAvailable(), product.getQuantity(), priceDto);
     }
 
     /**
@@ -118,7 +119,7 @@ public class ProductServiceV1 implements ProductService {
      * @param product    product to update.
      * @param price      new price.
      */
-    private void update(ProductDtoV1 productDto, Product product, Price price) {
+    private void update(ProductDtoIdV1 productDto, Product product, Price price) {
         product.setName(productDto.name());
         product.setDescription(productDto.description());
         product.setAvailable(productDto.available());
@@ -142,7 +143,19 @@ public class ProductServiceV1 implements ProductService {
      * Map entity from DTO to price.
      *
      * @param productDto DTO to be mapped from.
-     * @param
+     * @param product to be associated with new order.
+     * @return DTO as entity.
+     */
+    private Price priceFromDto(final ProductDtoIdV1 productDto, final Product product) {
+        PriceDtoV1 priceDto = productDto.price();
+        return new Price(null, priceDto.amount(), priceDto.currency(), priceDto.validFrom(), product);
+    }
+
+    /**
+     * Map entity from DTO to price.
+     *
+     * @param productDto DTO to be mapped from.
+     * @param product to be associated with new order.
      * @return DTO as entity.
      */
     private Price priceFromDto(final ProductDtoV1 productDto, final Product product) {
