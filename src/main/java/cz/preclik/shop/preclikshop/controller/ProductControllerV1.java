@@ -1,16 +1,18 @@
 package cz.preclik.shop.preclikshop.controller;
 
 import cz.preclik.shop.preclikshop.doc.v1.product.*;
+import cz.preclik.shop.preclikshop.domain.Product;
 import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
-import cz.preclik.shop.preclikshop.service.NegativeQuantityOfProductException;
+import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
 import cz.preclik.shop.preclikshop.service.ProductServiceV1;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.hateoas.MediaTypes;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.data.domain.Pageable;
 
 @RestController
 @RequestMapping("/v1/product")
@@ -23,15 +25,16 @@ public class ProductControllerV1 {
     }
 
     @GetMapping("")
-    @FindAllProductsEndpoint
-    public List<ProductDtoV1> findAll() {
-        return productService.findAll();
+    public ResponseEntity<PagedModel<Product>> findAll(Pageable pageable) {
+        return ResponseEntity.ok()
+                .contentType(MediaTypes.HAL_JSON)
+                .body(productService.findAll(pageable));
     }
 
     @GetMapping("/{id}")
     @FindProductEndpoint
-    public ProductDtoV1 findById(@PathVariable("id") final Long id) {
-        return productService.findById(id);
+    public ResponseEntity<Product> findById(@PathVariable("id") final Long id) {
+        return ResponseEntity.ok(productService.findById(id));
     }
 
     @PostMapping("")

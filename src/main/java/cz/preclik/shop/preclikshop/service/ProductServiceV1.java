@@ -1,5 +1,6 @@
 package cz.preclik.shop.preclikshop.service;
 
+import cz.preclik.shop.preclikshop.assembler.ProductModelAssemblerV1;
 import cz.preclik.shop.preclikshop.domain.EOrderProduct;
 import cz.preclik.shop.preclikshop.domain.Price;
 import cz.preclik.shop.preclikshop.domain.Product;
@@ -7,22 +8,24 @@ import cz.preclik.shop.preclikshop.dto.PriceDtoV1;
 import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
 import cz.preclik.shop.preclikshop.jpa.PriceRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
+import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 @Service
-public record ProductServiceV1(ProductRepository productRepository, PriceRepository priceRepository) {
-    public List<ProductDtoV1> findAll() {
-        return productRepository.findAll()
-                .stream()
-                .map(this::mapToDto)
-                .collect(Collectors.toList());
+public record ProductServiceV1(ProductRepository productRepository, PriceRepository priceRepository,
+                               PagedResourcesAssembler pagedResourcesAssembler, ProductModelAssemblerV1 productModelAssembler) {
+    public PagedModel findAll(Pageable pageable) {
+        Page<Product> page = productRepository.findAll(pageable);
+
+        return pagedResourcesAssembler.toModel(page, productModelAssembler);
     }
 
-    public ProductDtoV1 findById(final Long id) {
-        return mapToDto(productRepository.getById(id));
+    public Product findById(final Long id) {
+        return productRepository.getById(id);
     }
 
     public ProductDtoV1 add(final ProductDtoV1 productDto) {

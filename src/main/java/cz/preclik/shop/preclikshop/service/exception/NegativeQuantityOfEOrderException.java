@@ -1,4 +1,4 @@
-package cz.preclik.shop.preclikshop.service;
+package cz.preclik.shop.preclikshop.service.exception;
 
 public class NegativeQuantityOfEOrderException extends Throwable {
     public NegativeQuantityOfEOrderException(final Long id){

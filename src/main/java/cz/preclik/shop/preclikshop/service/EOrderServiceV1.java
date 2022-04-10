@@ -8,6 +8,9 @@ import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;
 import cz.preclik.shop.preclikshop.jpa.EOrderProductRepository;
 import cz.preclik.shop.preclikshop.jpa.EOrderRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
+import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
+import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
+import cz.preclik.shop.preclikshop.service.exception.OrderClosedException;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 
