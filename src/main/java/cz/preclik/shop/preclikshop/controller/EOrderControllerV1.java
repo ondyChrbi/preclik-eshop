@@ -5,10 +5,7 @@ import cz.preclik.shop.preclikshop.domain.EOrder;
 import cz.preclik.shop.preclikshop.dto.EOrderCompleteDtoV1;
 import cz.preclik.shop.preclikshop.dto.EOrderProductIdDtoV1;
 import cz.preclik.shop.preclikshop.service.EOrderServiceV1;
-import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
-import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
-import cz.preclik.shop.preclikshop.service.exception.NotAvailableProductException;
-import cz.preclik.shop.preclikshop.service.exception.OrderCannotBeClosedException;
+import cz.preclik.shop.preclikshop.service.exception.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,8 +46,8 @@ public class EOrderControllerV1 {
 
     @PutMapping("/{id}/pay")
     @PayEOrderEndpoint
-    public ResponseEntity pay(@PathVariable("id") final Long id) throws OrderCannotBeClosedException {
-        eOrderService.finishOrder(id, EOrder.OrderState.FINISH);
+    public ResponseEntity pay(@PathVariable("id") final Long id) throws OrderCannotBeClosedException, ProductOfOrderNotAvailableException {
+        eOrderService.payOrder(id);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
@@ -97,6 +94,11 @@ public class EOrderControllerV1 {
 
     @ExceptionHandler(value = OrderCannotBeClosedException.class)
     private ResponseEntity<?> orderClosedHandler(final OrderCannotBeClosedException exception) {
+        return ResponseEntity.status(HttpStatus.GONE).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(value = ProductOfOrderNotAvailableException.class)
+    private ResponseEntity<?> productOfOrderNotAvailableHandler(final ProductOfOrderNotAvailableException exception) {
         return ResponseEntity.status(HttpStatus.GONE).body(exception.getMessage());
     }
 }

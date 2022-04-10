@@ -7,10 +7,7 @@ import cz.preclik.shop.preclikshop.dto.*;
 import cz.preclik.shop.preclikshop.jpa.EOrderProductRepository;
 import cz.preclik.shop.preclikshop.jpa.EOrderRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
-import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
-import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
-import cz.preclik.shop.preclikshop.service.exception.NotAvailableProductException;
-import cz.preclik.shop.preclikshop.service.exception.OrderCannotBeClosedException;
+import cz.preclik.shop.preclikshop.service.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
@@ -80,6 +77,19 @@ public class EOrderServiceV1 implements EOrderService {
     }
 
     @Override
+    public void payOrder(final Long id) throws OrderCannotBeClosedException, ProductOfOrderNotAvailableException {
+        EOrder eOrder = eOrderRepository.findById(id).orElseThrow();
+
+        for (EOrderProduct eOrderProduct : eOrder.getEOrderProducts()) {
+            if (!eOrderProduct.getProduct().getAvailable()) {
+                throw new ProductOfOrderNotAvailableException();
+            }
+        }
+
+        finishOrder(eOrder, EOrder.OrderState.PAIED);
+    }
+
+    @Override
     public void finishOrder(final EOrder eOrder, final EOrder.OrderState orderState) throws OrderCannotBeClosedException {
         if(eOrder.getOrderState().isClosed() || EOrder.OrderState.OPEN.equals(orderState)) {
             throw new OrderCannotBeClosedException(eOrder.getId());
@@ -87,7 +97,7 @@ public class EOrderServiceV1 implements EOrderService {
 
         log.info("Closing of order with id (" + eOrder.getId() + ") started.");
 
-        if (!orderState.equals(EOrder.OrderState.FINISH)) {
+        if (!orderState.equals(EOrder.OrderState.PAIED)) {
             log.info("Releasing resources of order with id (" +  eOrder.getId() + ").");
 
             eOrderProductRepository.findAllByEOrder(eOrder)

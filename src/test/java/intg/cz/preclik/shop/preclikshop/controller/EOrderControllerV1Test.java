@@ -15,10 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.*;
@@ -114,7 +111,7 @@ class EOrderControllerV1Test {
         var eOrder = sendOrder(product, TO_BUY).getBody();
         payOrder(Objects.requireNonNull(eOrder));
 
-        assertEquals(EOrder.OrderState.FINISH , eOrderRepository.findById(eOrder.id()).orElseThrow().getOrderState());
+        assertEquals(EOrder.OrderState.PAIED, eOrderRepository.findById(eOrder.id()).orElseThrow().getOrderState());
     }
 
     @Test
@@ -129,6 +126,23 @@ class EOrderControllerV1Test {
         payOrder(Objects.requireNonNull(eOrder));
 
         assertEquals(AMOUNT - TO_BUY, productRepository.findById(product.getId()).orElseThrow().getQuantity());
+    }
+
+    @Test
+    void payNotOrderWithNotAvailableProductsExpect4xx() {
+        final int AMOUNT = 10;
+        final int TO_BUY = 5;
+
+        Product product = productRepository.save(new Product(null, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, AMOUNT, null, null));
+        priceRepository.save(new Price(null, new Random().nextDouble(), Price.Currency.CZK, new Date(), product));
+
+        var eOrder = sendOrder(product, TO_BUY).getBody();
+
+        product.setAvailable(false);
+        productRepository.save(product);
+
+        var response = payOrder(Objects.requireNonNull(eOrder));
+        assertEquals(HttpStatus.GONE, response.getStatusCode());
     }
 
     @Test
@@ -306,10 +320,10 @@ class EOrderControllerV1Test {
         return restTemplate.postForEntity(String.format(BASE_URL, port), request, EOrderCompleteDtoV1.class);
     }
 
-    private void payOrder(final EOrderCompleteDtoV1 orderDtoV1) {
+    private ResponseEntity<String> payOrder(final EOrderCompleteDtoV1 orderDtoV1) {
         HttpEntity<List<EOrderProductIdDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
 
-        restTemplate.put(String.format(BASE_URL + "/" + orderDtoV1.id() + "/pay" , port), request);
+        return restTemplate.exchange(String.format(BASE_URL + "/" + orderDtoV1.id() + "/pay" , port), HttpMethod.PUT, request, String.class);
     }
 
     private void disableOrder(final EOrderCompleteDtoV1 orderDtoV1) {

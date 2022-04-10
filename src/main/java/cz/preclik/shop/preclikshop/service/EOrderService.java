@@ -3,10 +3,7 @@ package cz.preclik.shop.preclikshop.service;
 import cz.preclik.shop.preclikshop.domain.EOrder;
 import cz.preclik.shop.preclikshop.dto.EOrderCompleteDtoV1;
 import cz.preclik.shop.preclikshop.dto.EOrderProductIdDtoV1;
-import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
-import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
-import cz.preclik.shop.preclikshop.service.exception.NotAvailableProductException;
-import cz.preclik.shop.preclikshop.service.exception.OrderCannotBeClosedException;
+import cz.preclik.shop.preclikshop.service.exception.*;
 
 import java.util.List;
 
@@ -28,6 +25,8 @@ public interface EOrderService {
      * @throws OrderCannotBeClosedException order is altery closed or wrong state passed as parameter.
      */
     void finishOrder(Long id, EOrder.OrderState orderState) throws OrderCannotBeClosedException;
+
+    void payOrder(Long id) throws OrderCannotBeClosedException, ProductOfOrderNotAvailableException;
 
     /**
      * Finish and close order.

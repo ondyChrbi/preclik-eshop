@@ -40,7 +40,7 @@ public class EOrder {
         /**
          * Successfully paid order.
          * */
-        FINISH(true),
+        PAIED(true),
         /**
          * Order cancelled by customer or service.
          * */
