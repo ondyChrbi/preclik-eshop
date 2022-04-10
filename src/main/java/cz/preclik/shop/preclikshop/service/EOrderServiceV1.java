@@ -32,13 +32,15 @@ public class EOrderServiceV1 {
         this.productRepository = productRepository;
     }
 
-    public EOrderDtoV1 create(final List<EOrderProductDtoV1> products) {
+    public EOrderDtoV1 create(final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException {
         EOrder entity = new EOrder(null, new Date(), EOrder.OrderState.OPEN, null);
         EOrder order = eOrderRepository.save(entity);
 
-        products.stream()
-                .map(product -> mapTo(product, order))
-                .forEach(eOrderProductRepository::save);
+        for (EOrderProductDtoV1 product : products) {
+            EOrderProduct orderProduct = mapTo(product, order);
+            productService.decreaseQuantity(orderProduct.getProduct(), orderProduct.getQuantity());
+            eOrderProductRepository.save(orderProduct);
+        }
 
         return mapTo(order);
     }
@@ -54,10 +56,12 @@ public class EOrderServiceV1 {
             throw new OrderClosedException(eOrder.getId());
         }
 
-        eOrderProductRepository.findAllByEOrder(eOrder)
-                .forEach(productService::increaseQuantity);
-        eOrder.setOrderState(orderState);
+        if (!orderState.equals(EOrder.OrderState.FINISH)) {
+            eOrderProductRepository.findAllByEOrder(eOrder)
+                    .forEach(productService::increaseQuantity);
+        }
 
+        eOrder.setOrderState(orderState);
         eOrderRepository.save(eOrder);
     }
 
@@ -127,6 +131,6 @@ public class EOrderServiceV1 {
 
     private EOrderProduct mapTo(final EOrderProductDtoV1 productDtoV1, final EOrder order) {
         Product product = productRepository.findById(productDtoV1.productId()).orElseThrow();
-        return new EOrderProduct(null, product.getQuantity(), order, product);
+        return new EOrderProduct(null, productDtoV1.quantity(), order, product);
     }
 }

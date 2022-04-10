@@ -24,39 +24,39 @@ public class EOrderControllerV1 {
     }
 
     @PostMapping("")
-    public ResponseEntity<EOrderDtoV1> create(@RequestBody @Validated final List<EOrderProductDtoV1> products){
+    public ResponseEntity<EOrderDtoV1> create(@RequestBody @Validated final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException {
         return ResponseEntity.ok(eOrderService.create(products));
     }
 
-    @PutMapping("/{id}/pay")
-    public ResponseEntity<EOrderDtoV1> pay(@PathVariable("id") final Long id) throws OrderClosedException {
-        eOrderService.finishOrder(id, EOrder.OrderState.FINISH);
-
-        return new ResponseEntity(HttpStatus.NO_CONTENT);
-    }
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<EOrderDtoV1> disable(@PathVariable("id") final Long id) throws OrderClosedException {
+    public ResponseEntity disable(@PathVariable("id") final Long id) throws OrderClosedException {
         eOrderService.finishOrder(id, EOrder.OrderState.CANCEL);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    @PutMapping("/{orderId}/product/{productId}/quantity/{count}")
+    @PutMapping("/{id}/pay")
+    public ResponseEntity pay(@PathVariable("id") final Long id) throws OrderClosedException {
+        eOrderService.finishOrder(id, EOrder.OrderState.FINISH);
+
+        return new ResponseEntity(HttpStatus.NO_CONTENT);
+    }
+
+    @PutMapping("/{orderId}/product/{productId}/quantity/edit/{count}")
     public ResponseEntity edit(@PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfProductException {
         eOrderService.edit(orderId, productId, count);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    @PostMapping("/{id}/product/{productId}/quantity/{count}")
+    @PutMapping("/{orderId}/product/{productId}/quantity/increase/{count}")
     public ResponseEntity increase(@PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfProductException {
         eOrderService.increase(orderId, productId, count);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    @DeleteMapping("/{orderId}/product/{productId}/quantity/{count}")
+    @PutMapping("/{orderId}/product/{productId}/quantity/decrease/{count}")
     public ResponseEntity decrease(@PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfEOrderException {
         eOrderService.decrease(orderId, productId, count);
 

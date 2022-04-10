@@ -52,6 +52,10 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
         increaseQuantity(eOrderProduct.getProduct().getId(), eOrderProduct.getQuantity());
     }
 
+    public void decreaseQuantity(final Product product, final Integer quantity) throws NegativeQuantityOfProductException {
+        decreaseQuantity(product.getId(), quantity);
+    }
+
     public void decreaseQuantity(final Long id, final Integer quantity) throws NegativeQuantityOfProductException {
         Product product = productRepository.findById(id).orElseThrow();
 
@@ -65,7 +69,7 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
 
     public void editQuantity(Long productId, Integer quantity) throws NegativeQuantityOfProductException {
         if(quantity < 0) {
-            decreaseQuantity(productId, quantity);
+            decreaseQuantity(productId, Math.abs(quantity));
         }
         if(quantity > 0) {
             increaseQuantity(productId, quantity);

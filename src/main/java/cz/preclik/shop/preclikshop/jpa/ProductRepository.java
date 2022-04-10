@@ -5,13 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
     @Modifying
+    @Transactional
     @Query("update Product p set p.available = :available where p.id = :id")
-    Integer setAvailable(@Param("available") final Boolean available, @Param("id") Integer id);
+    void setAvailable(@Param("available") final Boolean available, @Param("id") Integer id);
 
     @Modifying
+    @Transactional
     @Query("update Product p set p.quantity = p.quantity + :quantity WHERE p.id = :id")
-    Integer increaseQuantity(@Param("quantity") final Integer quantity, @Param("id") Long id);
+    void increaseQuantity(@Param("quantity") final Integer quantity, @Param("id") Long id);
 }
