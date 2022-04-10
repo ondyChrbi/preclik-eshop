@@ -68,8 +68,8 @@ public class EOrderServiceV1 {
         eOrderRepository.save(eOrder);
     }
 
-    public void finishExpired() {
-        eOrderRepository.findAllToBeSetAsExpirate(DateUtils.addMinutes(new Date(), 30), EOrder.OrderState.OPEN)
+    public void finishExpired(final Integer expirationTime) {
+        eOrderRepository.findAllToBeSetAsExpirate(DateUtils.addMinutes(new Date(), expirationTime), EOrder.OrderState.OPEN)
                 .forEach(eOrder -> {
                     try {
                         finishOrder(eOrder, EOrder.OrderState.EXPIRED);
