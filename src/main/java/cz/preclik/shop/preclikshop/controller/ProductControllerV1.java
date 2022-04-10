@@ -1,8 +1,10 @@
 package cz.preclik.shop.preclikshop.controller;
 
+import cz.preclik.shop.preclikshop.doc.v1.product.*;
 import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
 import cz.preclik.shop.preclikshop.service.NegativeQuantityOfProductException;
 import cz.preclik.shop.preclikshop.service.ProductServiceV1;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -12,6 +14,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/v1/product")
+@Tag(name = "Product v1", description = "Managing products from e-shop")
 public class ProductControllerV1 {
     private final ProductServiceV1 productService;
 
@@ -20,41 +23,48 @@ public class ProductControllerV1 {
     }
 
     @GetMapping("")
+    @FindAllProductsEndpoint
     public List<ProductDtoV1> findAll() {
         return productService.findAll();
     }
 
     @GetMapping("/{id}")
+    @FindProductEndpoint
     public ProductDtoV1 findById(@PathVariable("id") final Long id) {
         return productService.findById(id);
     }
 
     @PostMapping("")
+    @AddProductEndpoint
     public ResponseEntity<ProductDtoV1> add(@RequestBody @Validated final ProductDtoV1 product) {
         return ResponseEntity.ok(productService.add(product));
     }
 
     @PutMapping("/{id}")
+    @EditProductEndpoint
     public ResponseEntity<ProductDtoV1> edit(@RequestBody @Validated final ProductDtoV1 product, @PathVariable("id") final Long id) {
         return ResponseEntity.ok(productService.edit(product, id));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<HttpStatus> remove(@PathVariable("id") final Integer id){
+    @DeleteProductEndpoint
+    public ResponseEntity remove(@PathVariable("id") final Integer id){
         productService.remove(id);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    @PostMapping("/{id}/quantity/{quantity}")
-    public ResponseEntity<HttpStatus> increaseQuantity(@PathVariable("id") final Long id, @PathVariable("quantity") final Integer quantity){
+    @PutMapping("/{id}/quantity/increase/{quantity}")
+    @IncreaseQuantityOfProductEndpoint
+    public ResponseEntity increaseQuantity(@PathVariable("id") final Long id, @PathVariable("quantity") final Integer quantity){
         productService.increaseQuantity(id, quantity);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
     }
 
-    @DeleteMapping("/{id}/quantity/{count}")
-    public ResponseEntity<HttpStatus> decreaseQuantity(@PathVariable("id") final Long id, @PathVariable("count") final Integer count) throws NegativeQuantityOfProductException {
+    @PutMapping("/{id}/quantity/decrease/{count}")
+    @DecreaseQuantityOfProductEndpoint
+    public ResponseEntity decreaseQuantity(@PathVariable("id") final Long id, @PathVariable("count") final Integer count) throws NegativeQuantityOfProductException {
         productService.decreaseQuantity(id, count);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
