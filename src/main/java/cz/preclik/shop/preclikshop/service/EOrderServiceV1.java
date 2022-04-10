@@ -10,10 +10,12 @@ import cz.preclik.shop.preclikshop.jpa.EOrderRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
+import cz.preclik.shop.preclikshop.service.exception.NotAvailableProductException;
 import cz.preclik.shop.preclikshop.service.exception.OrderCannotBeClosedException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -41,12 +43,18 @@ public class EOrderServiceV1 implements EOrderService {
     }
 
     @Override
-    public EOrderDtoV1 create(final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException {
+    @Transactional(rollbackFor = Exception.class)
+    public EOrderDtoV1 create(final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException, NotAvailableProductException {
         EOrder entity = new EOrder(null, new Date(), EOrder.OrderState.OPEN, null);
         EOrder order = eOrderRepository.save(entity);
 
         for (EOrderProductDtoV1 product : products) {
             EOrderProduct orderProduct = mapTo(product, order);
+
+            if(!orderProduct.getProduct().getAvailable()) {
+                throw new NotAvailableProductException(orderProduct.getProduct());
+            }
+
             productService.decreaseQuantity(orderProduct.getProduct(), orderProduct.getQuantity());
             eOrderProductRepository.save(orderProduct);
         }
@@ -106,7 +114,7 @@ public class EOrderServiceV1 implements EOrderService {
     }
 
     @Override
-    public void increase(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfProductException {
+    public void increase(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfProductException, NotAvailableProductException {
         Optional<EOrderProduct> orderProductOptional = eOrderProductRepository.findOrderProductByRelatedProduct(orderId, productId);
 
         if (!orderProductOptional.isPresent()) {
@@ -115,14 +123,18 @@ public class EOrderServiceV1 implements EOrderService {
         }
 
         EOrderProduct orderProduct = orderProductOptional.get();
+
+        if(!orderProduct.getProduct().getAvailable()) {
+            throw new NotAvailableProductException(orderProduct.getProduct());
+        }
+
         productService.decreaseQuantity(productId, count);
         orderProduct.setQuantity(orderProduct.getQuantity() + count);
-
         eOrderProductRepository.save(orderProduct);
     }
 
     @Override
-    public void decrease(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfEOrderException {
+    public void decrease(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfEOrderException, NotAvailableProductException {
         EOrderProduct orderProduct = eOrderProductRepository.findOrderProductByRelatedProduct(orderId, productId).orElseThrow();
 
         if ((orderProduct.getQuantity() - count) < 0) {

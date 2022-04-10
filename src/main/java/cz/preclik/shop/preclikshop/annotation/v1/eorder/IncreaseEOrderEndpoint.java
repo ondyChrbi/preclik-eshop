@@ -16,6 +16,7 @@ import java.lang.annotation.*;
         @ApiResponse(responseCode = "204", description = "Success", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
         @ApiResponse(responseCode = "400", description = "Check your request", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
         @ApiResponse(responseCode = "404", description = "Order not found", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+        @ApiResponse(responseCode = "409", description = "Not enough quantity or product is not available on stock", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
 })
 public @interface IncreaseEOrderEndpoint {
 }

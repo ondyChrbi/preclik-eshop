@@ -11,12 +11,12 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@Operation(summary = "Disable order")
+@Operation(summary = "Decrease order product quantity")
 @ApiResponses({
         @ApiResponse(responseCode = "204", description = "Success", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
         @ApiResponse(responseCode = "400", description = "Check your request", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
         @ApiResponse(responseCode = "404", description = "Order not found", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
-        @ApiResponse(responseCode = "409", description = "Not enough quantity of product on stock", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE))
+        @ApiResponse(responseCode = "409", description = "Product not available", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE))
 })
 public @interface DecreaseEOrderEndpoint {
 }

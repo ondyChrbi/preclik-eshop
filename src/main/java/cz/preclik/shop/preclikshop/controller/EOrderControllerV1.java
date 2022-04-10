@@ -7,6 +7,7 @@ import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;
 import cz.preclik.shop.preclikshop.service.EOrderServiceV1;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
+import cz.preclik.shop.preclikshop.service.exception.NotAvailableProductException;
 import cz.preclik.shop.preclikshop.service.exception.OrderCannotBeClosedException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
@@ -28,7 +29,7 @@ public class EOrderControllerV1 {
 
     @PostMapping("")
     @CreateEOrderEndpoint
-    public ResponseEntity<EOrderDtoV1> create(@RequestBody @Validated final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException {
+    public ResponseEntity<EOrderDtoV1> create(@RequestBody @Validated final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException, NotAvailableProductException {
         return ResponseEntity.ok(eOrderService.create(products));
     }
 
@@ -58,7 +59,7 @@ public class EOrderControllerV1 {
 
     @PutMapping("/{orderId}/product/{productId}/quantity/increase/{count}")
     @IncreaseEOrderEndpoint
-    public ResponseEntity increase(@PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfProductException {
+    public ResponseEntity increase(@PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfProductException, NotAvailableProductException {
         eOrderService.increase(orderId, productId, count);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -66,7 +67,7 @@ public class EOrderControllerV1 {
 
     @PutMapping("/{orderId}/product/{productId}/quantity/decrease/{count}")
     @DecreaseEOrderEndpoint
-    public ResponseEntity decrease(@PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfEOrderException {
+    public ResponseEntity decrease(@PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfEOrderException, NotAvailableProductException {
         eOrderService.decrease(orderId, productId, count);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -74,6 +75,11 @@ public class EOrderControllerV1 {
 
     @ExceptionHandler(value = NegativeQuantityOfEOrderException.class)
     private ResponseEntity<?> negativeQuantityOfEOrderHandler(final NegativeQuantityOfEOrderException exception) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(value = NotAvailableProductException.class)
+    private ResponseEntity<?> notAvailableProductHandler(final NotAvailableProductException exception) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
     }
 
