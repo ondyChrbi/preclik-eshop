@@ -1,6 +1,6 @@
 package cz.preclik.shop.preclikshop.controller;
 
-import cz.preclik.shop.preclikshop.doc.v1.eorder.*;
+import cz.preclik.shop.preclikshop.annotation.v1.eorder.*;
 import cz.preclik.shop.preclikshop.domain.EOrder;
 import cz.preclik.shop.preclikshop.dto.EOrderDtoV1;
 import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;

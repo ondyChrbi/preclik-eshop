@@ -1,4 +1,4 @@
-package cz.preclik.shop.preclikshop.doc.v1.product;
+package cz.preclik.shop.preclikshop.annotation.v1.product;
 
 import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
 import io.swagger.v3.oas.annotations.Operation;
