@@ -8,6 +8,9 @@ import javax.persistence.*;
 import java.util.Collection;
 import java.util.Date;
 
+/**
+ * Order of products. Naming e means electronic. Because some databases has order reserved as a keyword.
+ **/
 @Entity
 @Table(name = "e_order")
 @SequenceGenerator(name = "e_order_id_seq", sequenceName = "e_order_id_seq", allocationSize = 1)
@@ -26,9 +29,30 @@ public class EOrder {
     @JoinColumn(name = "e_order_id")
     private Collection<EOrderProduct> eOrderProducts;
 
+    /**
+     * Define state of order.
+     * */
     public enum OrderState{
-        OPEN(false), FINISH(true), CANCEL(true), EXPIRED(true);
+        /**
+         * Newly created order with 30 minutes interval to finish or cancel.
+         * */
+        OPEN(false),
+        /**
+         * Successfully paid order.
+         * */
+        FINISH(true),
+        /**
+         * Order cancelled by customer or service.
+         * */
+        CANCEL(true),
+        /**
+         * Open order expired after 30 minutes interval.
+         * */
+        EXPIRED(true);
 
+        /**
+         * Define if order is closed. If true, then no action is available for order.
+         * */
         final boolean closed;
 
         OrderState(final boolean closed) {

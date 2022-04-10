@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.util.Date;
 
+/**
+ * Price of product.
+ * */
 @Entity
 @Table(name = "price")
 @SequenceGenerator(name = "price_id_seq", sequenceName = "price_id_seq", allocationSize = 1)
@@ -21,6 +24,9 @@ public class Price {
     private Double amount;
     @Enumerated(EnumType.STRING)
     private Currency currency;
+    /**
+     * Defines from which date is price valid.
+     * */
     @Column
     private Date validFrom;
     @ManyToOne(fetch = FetchType.LAZY)

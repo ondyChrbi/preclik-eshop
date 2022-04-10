@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 import javax.persistence.*;
 import java.util.Collection;
 
+/**
+ * Product that can be bought by customer.
+ * */
 @Entity
 @Table(name = "product", indexes = {@Index(name = "product_name_idx", columnList = "name")})
 @SequenceGenerator(name = "product_id_seq", sequenceName = "product_id_seq", allocationSize = 1)
