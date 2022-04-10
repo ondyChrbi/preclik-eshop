@@ -66,7 +66,7 @@ public class EOrderServiceV1 implements EOrderService {
         eorder.setOrderState(EOrder.OrderState.OPEN);
 
         EOrder order = eOrderRepository.save(eorder);
-        updateQuantityOfProducts(products, order);
+        decreaseQuantityOfProducts(products, order);
 
         log.info("New order (" + order.getId() + ") was created.");
         return mapTo(order, null);
@@ -211,6 +211,13 @@ public class EOrderServiceV1 implements EOrderService {
         return new EOrderProduct(null, productDtoV1.quantity(), null, product);
     }
 
+    /**
+     * Check if ordering products are available.
+     *
+     * @param eOrderProducts products to order.
+     *
+     * @return missing products.
+     * */
     private List<EOrderProductDtoV1> checkQuantity(List<EOrderProductIdDtoV1> eOrderProducts) {
         List<EOrderProductDtoV1> missingProduct = new ArrayList<>();
 
@@ -228,7 +235,13 @@ public class EOrderServiceV1 implements EOrderService {
         return missingProduct;
     }
 
-    private void updateQuantityOfProducts(List<EOrderProductIdDtoV1> products, EOrder order) throws NotAvailableProductException, NegativeQuantityOfProductException {
+    /**
+     * Decrease quantity of ordering products.
+     *
+     * @param products products to order.
+     * @param order order associated with products.
+     * */
+    private void decreaseQuantityOfProducts(List<EOrderProductIdDtoV1> products, EOrder order) throws NotAvailableProductException, NegativeQuantityOfProductException {
         for (EOrderProductIdDtoV1 product : products) {
             EOrderProduct orderProduct = mapTo(product, order);
 
