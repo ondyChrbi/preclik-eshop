@@ -86,4 +86,13 @@ public interface ProductService {
      * @param quantity  not available items.
      */
     void editQuantity(Long productId, Integer quantity) throws NegativeQuantityOfProductException;
+
+    /**
+     * Map entity of product to DTO.
+     *
+     * @param product entity to be mapped.
+     *
+     * @return entity as dto.
+     * */
+    ProductDtoV1 mapToDto(Product product);
 }

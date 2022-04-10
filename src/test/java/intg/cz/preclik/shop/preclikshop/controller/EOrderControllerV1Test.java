@@ -3,8 +3,8 @@ package cz.preclik.shop.preclikshop.controller;
 import cz.preclik.shop.preclikshop.domain.EOrder;
 import cz.preclik.shop.preclikshop.domain.Price;
 import cz.preclik.shop.preclikshop.domain.Product;
-import cz.preclik.shop.preclikshop.dto.EOrderDtoV1;
-import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;
+import cz.preclik.shop.preclikshop.dto.EOrderCompleteDtoV1;
+import cz.preclik.shop.preclikshop.dto.EOrderProductIdDtoV1;
 import cz.preclik.shop.preclikshop.jpa.EOrderProductRepository;
 import cz.preclik.shop.preclikshop.jpa.EOrderRepository;
 import cz.preclik.shop.preclikshop.jpa.PriceRepository;
@@ -64,7 +64,7 @@ class EOrderControllerV1Test {
         priceRepository.save(new Price(null, new Random().nextDouble(), Price.Currency.CZK, new Date(), product));
 
         var response = sendOrder(product, 5);
-        assertTrue(eOrderRepository.findById(response.getBody().id()).isPresent());
+        assertTrue(eOrderRepository.findById(Objects.requireNonNull(response.getBody()).id()).isPresent());
     }
 
     @Test
@@ -89,6 +89,18 @@ class EOrderControllerV1Test {
 
         var response = sendOrder(product, TO_BUY);
         assertEquals(response.getStatusCode(), HttpStatus.OK);
+    }
+
+    @Test
+    void postOrderWithNoProductQuantityProvide2xxWithMissingProductsStatus() {
+        final int AMOUNT = 10;
+        final int TO_BUY = 11;
+
+        Product product = productRepository.save(new Product(null, UUID.randomUUID().toString(), UUID.randomUUID().toString(), true, AMOUNT, null, null));
+        priceRepository.save(new Price(null, new Random().nextDouble(), Price.Currency.CZK, new Date(), product));
+
+        var response = sendOrder(product, TO_BUY);
+        assertEquals(Objects.requireNonNull(response.getBody()).eOrderProducts().size(), 1);
     }
 
     @Test
@@ -134,7 +146,7 @@ class EOrderControllerV1Test {
     }
 
     @Test
-    void disablWillIncreaseProductsQuantity() {
+    void disableWillIncreaseProductsQuantity() {
         final int AMOUNT = 10;
         final int TO_BUY = 5;
 
@@ -287,43 +299,43 @@ class EOrderControllerV1Test {
         assertFalse(eOrderProduct.isPresent());
     }
 
-    private ResponseEntity<EOrderDtoV1> sendOrder(final Product product, final int toBuy) {
-        EOrderProductDtoV1 eOrderProductDtoV1 = new EOrderProductDtoV1(product.getId(), toBuy);
-        HttpEntity<List<EOrderProductDtoV1>> request = new HttpEntity<>(Collections.singletonList(eOrderProductDtoV1), new HttpHeaders());
+    private ResponseEntity<EOrderCompleteDtoV1> sendOrder(final Product product, final int toBuy) {
+        EOrderProductIdDtoV1 eOrderProductIdDtoV1 = new EOrderProductIdDtoV1(product.getId(), toBuy);
+        HttpEntity<List<EOrderProductIdDtoV1>> request = new HttpEntity<>(Collections.singletonList(eOrderProductIdDtoV1), new HttpHeaders());
 
-        return restTemplate.postForEntity(String.format(BASE_URL, port), request, EOrderDtoV1.class);
+        return restTemplate.postForEntity(String.format(BASE_URL, port), request, EOrderCompleteDtoV1.class);
     }
 
-    private void payOrder(final EOrderDtoV1 orderDtoV1) {
-        HttpEntity<List<EOrderProductDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
+    private void payOrder(final EOrderCompleteDtoV1 orderDtoV1) {
+        HttpEntity<List<EOrderProductIdDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
 
         restTemplate.put(String.format(BASE_URL + "/" + orderDtoV1.id() + "/pay" , port), request);
     }
 
-    private void disableOrder(final EOrderDtoV1 orderDtoV1) {
-        HttpEntity<List<EOrderProductDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
+    private void disableOrder(final EOrderCompleteDtoV1 orderDtoV1) {
+        HttpEntity<List<EOrderProductIdDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
 
         restTemplate.delete(String.format(BASE_URL + "/" + orderDtoV1.id() , port), request);
     }
 
-    private void editOrder(final EOrderDtoV1 orderDtoV1, final Product product, final int quantity) {
+    private void editOrder(final EOrderCompleteDtoV1 orderDtoV1, final Product product, final int quantity) {
         String url = String.format("%s/%d/product/%d/quantity/edit/%d", String.format(BASE_URL, port), orderDtoV1.id(), product.getId(), quantity);
 
-        HttpEntity<List<EOrderProductDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
+        HttpEntity<List<EOrderProductIdDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
         restTemplate.put(String.format(url , port), request);
     }
 
-    private void increaseProductOfOrder(final EOrderDtoV1 orderDtoV1, final Product product, final int quantity) {
+    private void increaseProductOfOrder(final EOrderCompleteDtoV1 orderDtoV1, final Product product, final int quantity) {
         String url = String.format("%s/%d/product/%d/quantity/increase/%d", String.format(BASE_URL, port), orderDtoV1.id(), product.getId(), quantity);
 
-        HttpEntity<List<EOrderProductDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
+        HttpEntity<List<EOrderProductIdDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
         restTemplate.put(String.format(url , port), request);
     }
 
-    private void decreaseProductOfOrder(final EOrderDtoV1 orderDtoV1, final Product product, final int quantity) {
+    private void decreaseProductOfOrder(final EOrderCompleteDtoV1 orderDtoV1, final Product product, final int quantity) {
         String url = String.format("%s/%d/product/%d/quantity/decrease/%d", String.format(BASE_URL, port), orderDtoV1.id(), product.getId(), quantity);
 
-        HttpEntity<List<EOrderProductDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
+        HttpEntity<List<EOrderProductIdDtoV1>> request = new HttpEntity<>(null, new HttpHeaders());
         restTemplate.put(String.format(url , port), request);
     }
 }

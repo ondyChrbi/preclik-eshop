@@ -2,8 +2,8 @@ package cz.preclik.shop.preclikshop.controller;
 
 import cz.preclik.shop.preclikshop.annotation.v1.eorder.*;
 import cz.preclik.shop.preclikshop.domain.EOrder;
-import cz.preclik.shop.preclikshop.dto.EOrderDtoV1;
-import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;
+import cz.preclik.shop.preclikshop.dto.EOrderCompleteDtoV1;
+import cz.preclik.shop.preclikshop.dto.EOrderProductIdDtoV1;
 import cz.preclik.shop.preclikshop.service.EOrderServiceV1;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
@@ -27,9 +27,15 @@ public class EOrderControllerV1 {
         this.eOrderService = eOrderService;
     }
 
+    @GetMapping("/{id}")
+    @FindOrderEndpoint
+    public ResponseEntity<EOrderCompleteDtoV1> findById(@PathVariable("id") final Long id) {
+        return ResponseEntity.ok(eOrderService.findById(id));
+    }
+
     @PostMapping("")
     @CreateEOrderEndpoint
-    public ResponseEntity<EOrderDtoV1> create(@RequestBody @Validated final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException, NotAvailableProductException {
+    public ResponseEntity<EOrderCompleteDtoV1> create(@RequestBody @Validated final List<EOrderProductIdDtoV1> products) throws NotAvailableProductException, NegativeQuantityOfProductException {
         return ResponseEntity.ok(eOrderService.create(products));
     }
 
@@ -67,7 +73,8 @@ public class EOrderControllerV1 {
 
     @PutMapping("/{orderId}/product/{productId}/quantity/decrease/{count}")
     @DecreaseEOrderEndpoint
-    public ResponseEntity decrease(@PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfEOrderException, NotAvailableProductException {
+    public ResponseEntity decrease(
+            @PathVariable("orderId") final Long orderId, @PathVariable("productId") final Long productId, @PathVariable("count") final Integer count) throws NegativeQuantityOfEOrderException {
         eOrderService.decrease(orderId, productId, count);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);

@@ -48,7 +48,11 @@ public class EOrder {
         /**
          * Open order expired after 30 minutes interval.
          * */
-        EXPIRED(true);
+        EXPIRED(true),
+        /**
+         * Order was not created.
+         * */
+        NOT_CREATED(true);
 
         /**
          * Define if order is closed. If true, then no action is available for order.

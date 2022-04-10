@@ -3,8 +3,7 @@ package cz.preclik.shop.preclikshop.service;
 import cz.preclik.shop.preclikshop.domain.EOrder;
 import cz.preclik.shop.preclikshop.domain.EOrderProduct;
 import cz.preclik.shop.preclikshop.domain.Product;
-import cz.preclik.shop.preclikshop.dto.EOrderDtoV1;
-import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;
+import cz.preclik.shop.preclikshop.dto.*;
 import cz.preclik.shop.preclikshop.jpa.EOrderProductRepository;
 import cz.preclik.shop.preclikshop.jpa.EOrderRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
@@ -17,9 +16,8 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Service for creation and managing order in eshop.
@@ -43,24 +41,35 @@ public class EOrderServiceV1 implements EOrderService {
     }
 
     @Override
+    public EOrderCompleteDtoV1 findById(Long id) {
+        EOrder eOrder = eOrderRepository.findById(id).orElseThrow();
+        Collection<EOrderProductDtoV1> products = eOrder.getEOrderProducts()
+                .stream()
+                .map(eOrderProduct -> new EOrderProductDtoV1(
+                        productService.mapToDto(eOrderProduct.getProduct()),
+                        eOrderProduct.getQuantity())
+                ).collect(Collectors.toList());
+
+        return new EOrderCompleteDtoV1(eOrder.getId(), eOrder.getCreationDate(), eOrder.getOrderState(), products);
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    public EOrderDtoV1 create(final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException, NotAvailableProductException {
-        EOrder entity = new EOrder(null, new Date(), EOrder.OrderState.OPEN, null);
-        EOrder order = eOrderRepository.save(entity);
+    public EOrderCompleteDtoV1 create(final List<EOrderProductIdDtoV1> products) throws NegativeQuantityOfProductException, NotAvailableProductException {
+        EOrder eorder = new EOrder(null, new Date(), EOrder.OrderState.NOT_CREATED, null);
 
-        for (EOrderProductDtoV1 product : products) {
-            EOrderProduct orderProduct = mapTo(product, order);
-
-            if(!orderProduct.getProduct().getAvailable()) {
-                throw new NotAvailableProductException(orderProduct.getProduct());
-            }
-
-            productService.decreaseQuantity(orderProduct.getProduct(), orderProduct.getQuantity());
-            eOrderProductRepository.save(orderProduct);
+        List<EOrderProductDtoV1> missingProducts = checkQuantity(products);
+        if (!missingProducts.isEmpty()) {
+            return mapTo(eorder, missingProducts);
         }
 
+        eorder.setOrderState(EOrder.OrderState.OPEN);
+
+        EOrder order = eOrderRepository.save(eorder);
+        updateQuantityOfProducts(products, order);
+
         log.info("New order (" + order.getId() + ") was created.");
-        return mapTo(order);
+        return mapTo(order, null);
     }
 
     @Override
@@ -117,7 +126,7 @@ public class EOrderServiceV1 implements EOrderService {
     public void increase(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfProductException, NotAvailableProductException {
         Optional<EOrderProduct> orderProductOptional = eOrderProductRepository.findOrderProductByRelatedProduct(orderId, productId);
 
-        if (!orderProductOptional.isPresent()) {
+        if (orderProductOptional.isEmpty()) {
             createOrderProduct(orderId, productId, count);
             return;
         }
@@ -134,7 +143,7 @@ public class EOrderServiceV1 implements EOrderService {
     }
 
     @Override
-    public void decrease(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfEOrderException, NotAvailableProductException {
+    public void decrease(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfEOrderException {
         EOrderProduct orderProduct = eOrderProductRepository.findOrderProductByRelatedProduct(orderId, productId).orElseThrow();
 
         if ((orderProduct.getQuantity() - count) < 0) {
@@ -173,20 +182,63 @@ public class EOrderServiceV1 implements EOrderService {
      *
      * @return entity as dto.
      * */
-    private EOrderDtoV1 mapTo(final EOrder eOrder) {
-        return new EOrderDtoV1(eOrder.getId(), eOrder.getOrderState(), eOrder.getCreationDate());
+    private EOrderCompleteDtoV1 mapTo(final EOrder eOrder, final Collection<EOrderProductDtoV1> productDtos) {
+        return new EOrderCompleteDtoV1(eOrder.getId(), eOrder.getCreationDate(), eOrder.getOrderState(), productDtos);
     }
 
     /**
-     * Map entity of order and product to DTO.
+     * Map entity of order and product to DTO (quantity only).
      *
      * @param productDtoV1 dto of product.
      * @param eOrder entity to be mapped.
      *
      * @return entity as dto.
      * */
-    private EOrderProduct mapTo(final EOrderProductDtoV1 productDtoV1, final EOrder eOrder) {
+    private EOrderProduct mapTo(final EOrderProductIdDtoV1 productDtoV1, final EOrder eOrder) {
         Product product = productRepository.findById(productDtoV1.productId()).orElseThrow();
         return new EOrderProduct(null, productDtoV1.quantity(), eOrder, product);
+    }
+
+    /**
+     * Map entity of order and product to DTO (quantity only). Order is not created yet.
+     *
+     * @param productDtoV1 dto of product.ed.
+     *
+     * @return entity as dto.
+     * */
+    private EOrderProduct mapTo(final EOrderProductIdDtoV1 productDtoV1) {
+        Product product = productRepository.findById(productDtoV1.productId()).orElseThrow();
+        return new EOrderProduct(null, productDtoV1.quantity(), null, product);
+    }
+
+    private List<EOrderProductDtoV1> checkQuantity(List<EOrderProductIdDtoV1> eOrderProducts) {
+        List<EOrderProductDtoV1> missingProduct = new ArrayList<>();
+
+        for (EOrderProductIdDtoV1 eOrderProduct : eOrderProducts) {
+            EOrderProduct orderProduct = mapTo(eOrderProduct);
+
+            Product product = orderProduct.getProduct();
+            int orderingQuantity = product.getQuantity() - eOrderProduct.quantity() ;
+
+            if (orderingQuantity < 0){
+                missingProduct.add(new EOrderProductDtoV1(productService.mapToDto(orderProduct.getProduct()), Math.abs(orderingQuantity)));
+            }
+        }
+
+        return missingProduct;
+    }
+
+    private void updateQuantityOfProducts(List<EOrderProductIdDtoV1> products, EOrder order) throws NotAvailableProductException, NegativeQuantityOfProductException {
+        for (EOrderProductIdDtoV1 product : products) {
+            EOrderProduct orderProduct = mapTo(product, order);
+
+            if(!orderProduct.getProduct().getAvailable()) {
+                throw new NotAvailableProductException(orderProduct.getProduct());
+            }
+
+            productService.decreaseQuantity(orderProduct.getProduct(), orderProduct.getQuantity());
+            eOrderProductRepository.save(orderProduct);
+
+        }
     }
 }

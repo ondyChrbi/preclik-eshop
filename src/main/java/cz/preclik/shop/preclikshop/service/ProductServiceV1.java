@@ -9,7 +9,6 @@ import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
 import cz.preclik.shop.preclikshop.jpa.PriceRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedModel;
@@ -17,15 +16,27 @@ import org.springframework.stereotype.Service;
 
 /**
  * Service for creation and managing products in eshop.
- * */
+ */
 @Service
-public record ProductServiceV1(ProductRepository productRepository, PriceRepository priceRepository,
-                               PagedResourcesAssembler pagedResourcesAssembler, ProductModelAssemblerV1 productModelAssembler) implements ProductService {
+public class ProductServiceV1 implements ProductService {
+    private final ProductRepository productRepository;
+
+    private final PriceRepository priceRepository;
+
+    private final PagedResourcesAssembler pagedResourcesAssembler;
+
+    private final ProductModelAssemblerV1 productModelAssembler;
+
+    public ProductServiceV1(ProductRepository productRepository, PriceRepository priceRepository, PagedResourcesAssembler pagedResourcesAssembler, ProductModelAssemblerV1 productModelAssembler) {
+        this.productRepository = productRepository;
+        this.priceRepository = priceRepository;
+        this.pagedResourcesAssembler = pagedResourcesAssembler;
+        this.productModelAssembler = productModelAssembler;
+    }
+
     @Override
     public PagedModel findAll(Pageable pageable) {
-        Page<Product> page = productRepository.findAll(pageable);
-
-        return pagedResourcesAssembler.toModel(page, productModelAssembler);
+        return pagedResourcesAssembler.toModel(productRepository.findAll(pageable), productModelAssembler);
     }
 
     @Override
@@ -84,21 +95,29 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
 
     @Override
     public void editQuantity(Long productId, Integer quantity) throws NegativeQuantityOfProductException {
-        if(quantity < 0) {
+        if (quantity < 0) {
             decreaseQuantity(productId, Math.abs(quantity));
         }
-        if(quantity > 0) {
+        if (quantity > 0) {
             increaseQuantity(productId, quantity);
         }
+    }
+
+    @Override
+    public ProductDtoV1 mapToDto(final Product product) {
+        Price price = priceRepository.findFirstByProductEqualsOrderByValidFromDesc(product);
+        PriceDtoV1 priceDto = new PriceDtoV1(price.getId(), price.getAmount(), price.getCurrency(), price.getValidFrom());
+
+        return new ProductDtoV1(product.getId(), product.getName(), product.getDescription(), product.getAvailable(), product.getQuantity(), priceDto);
     }
 
     /**
      * Update product based on dto.
      *
      * @param productDto new product fields.
-     * @param product product to update.
-     * @param price new price.
-     * */
+     * @param product    product to update.
+     * @param price      new price.
+     */
     private void update(ProductDtoV1 productDto, Product product, Price price) {
         product.setName(productDto.name());
         product.setDescription(productDto.description());
@@ -112,9 +131,8 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
      * Map entity from DTO to product.
      *
      * @param productDto DTO to be mapped.
-     *
      * @return DTO as entity.
-     * */
+     */
     private Product productFromDto(final ProductDtoV1 productDto) {
         return new Product(null, productDto.name(), productDto.description(),
                 productDto.available(), productDto.quantity(), null, null);
@@ -125,25 +143,10 @@ public record ProductServiceV1(ProductRepository productRepository, PriceReposit
      *
      * @param productDto DTO to be mapped from.
      * @param
-     *
      * @return DTO as entity.
-     * */
+     */
     private Price priceFromDto(final ProductDtoV1 productDto, final Product product) {
         PriceDtoV1 priceDto = productDto.price();
         return new Price(null, priceDto.amount(), priceDto.currency(), priceDto.validFrom(), product);
-    }
-
-    /**
-     * Map entity of product to DTO.
-     *
-     * @param product entity to be mapped.
-     *
-     * @return entity as dto.
-     * */
-    private ProductDtoV1 mapToDto(final Product product) {
-        Price price = priceRepository.findFirstByProductEqualsOrderByValidFromDesc(product);
-        PriceDtoV1 priceDto = new PriceDtoV1(price.getId(), price.getAmount(), price.getCurrency(), price.getValidFrom());
-
-        return new ProductDtoV1(product.getId(), product.getName(), product.getDescription(), product.getAvailable(), product.getQuantity(), priceDto);
     }
 }

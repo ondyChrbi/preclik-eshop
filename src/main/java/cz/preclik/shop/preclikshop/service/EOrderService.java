@@ -1,8 +1,8 @@
 package cz.preclik.shop.preclikshop.service;
 
 import cz.preclik.shop.preclikshop.domain.EOrder;
-import cz.preclik.shop.preclikshop.dto.EOrderDtoV1;
-import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;
+import cz.preclik.shop.preclikshop.dto.EOrderCompleteDtoV1;
+import cz.preclik.shop.preclikshop.dto.EOrderProductIdDtoV1;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
 import cz.preclik.shop.preclikshop.service.exception.NotAvailableProductException;
@@ -18,7 +18,7 @@ public interface EOrderService {
      * @return new order.
      * @throws NegativeQuantityOfProductException when some products will be out od stock.
      */
-    EOrderDtoV1 create(List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException, NotAvailableProductException;
+    EOrderCompleteDtoV1 create(List<EOrderProductIdDtoV1> products) throws NegativeQuantityOfProductException, NotAvailableProductException;
 
     /**
      * Finish and close order.
@@ -71,4 +71,6 @@ public interface EOrderService {
      * @param count     new quantity of product.
      */
     void decrease(Long orderId, Long productId, Integer count) throws NegativeQuantityOfEOrderException, NotAvailableProductException;
+
+    EOrderCompleteDtoV1 findById(final Long id);
 }

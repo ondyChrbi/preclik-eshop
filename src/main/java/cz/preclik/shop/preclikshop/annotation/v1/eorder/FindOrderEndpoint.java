@@ -1,4 +1,4 @@
-package cz.preclik.shop.preclikshop.annotation.v1.product;
+package cz.preclik.shop.preclikshop.annotation.v1.eorder;
 
 import cz.preclik.shop.preclikshop.dto.ProductDtoV1;
 import io.swagger.v3.oas.annotations.Operation;
@@ -14,11 +14,13 @@ import java.lang.annotation.*;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
-@Operation(summary = "Find all products")
+@Operation(summary = "Find order based on id")
 @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Success", content = @Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema = @Schema(implementation = ProductDtoV1.class)))
+                array = @ArraySchema(schema = @Schema(implementation = ProductDtoV1.class)))),
+        @ApiResponse(responseCode = "400", description = "Check your request", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
+        @ApiResponse(responseCode = "404", description = "Product not found", content = @Content(mediaType = MediaType.TEXT_PLAIN_VALUE)),
 })
-public @interface FindAllProductsEndpoint {
+public @interface FindOrderEndpoint {
 }
