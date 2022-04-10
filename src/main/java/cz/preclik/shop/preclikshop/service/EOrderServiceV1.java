@@ -10,7 +10,8 @@ import cz.preclik.shop.preclikshop.jpa.EOrderRepository;
 import cz.preclik.shop.preclikshop.jpa.ProductRepository;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
-import cz.preclik.shop.preclikshop.service.exception.OrderClosedException;
+import cz.preclik.shop.preclikshop.service.exception.OrderCannotBeClosedException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.stereotype.Service;
 
@@ -18,8 +19,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service for creation and managing order in eshop.
+ * */
 @Service
-public class EOrderServiceV1 {
+@Slf4j
+public class EOrderServiceV1 implements EOrderService {
     private final ProductServiceV1 productService;
 
     private final EOrderRepository eOrderRepository;
@@ -35,6 +40,7 @@ public class EOrderServiceV1 {
         this.productRepository = productRepository;
     }
 
+    @Override
     public EOrderDtoV1 create(final List<EOrderProductDtoV1> products) throws NegativeQuantityOfProductException {
         EOrder entity = new EOrder(null, new Date(), EOrder.OrderState.OPEN, null);
         EOrder order = eOrderRepository.save(entity);
@@ -45,49 +51,61 @@ public class EOrderServiceV1 {
             eOrderProductRepository.save(orderProduct);
         }
 
+        log.info("New order (" + order.getId() + ") was created.");
         return mapTo(order);
     }
 
-    public void finishOrder(final Long id, final EOrder.OrderState orderState) throws OrderClosedException {
+    @Override
+    public void finishOrder(final Long id, final EOrder.OrderState orderState) throws OrderCannotBeClosedException {
         EOrder eOrder = eOrderRepository.findById(id).orElseThrow();
 
         finishOrder(eOrder, orderState);
     }
 
-    public void finishOrder(final EOrder eOrder, final EOrder.OrderState orderState) throws OrderClosedException {
-        if(eOrder.getOrderState().isClosed()) {
-            throw new OrderClosedException(eOrder.getId());
+    @Override
+    public void finishOrder(final EOrder eOrder, final EOrder.OrderState orderState) throws OrderCannotBeClosedException {
+        if(eOrder.getOrderState().isClosed() || EOrder.OrderState.OPEN.equals(orderState)) {
+            throw new OrderCannotBeClosedException(eOrder.getId());
         }
 
+        log.info("Closing of order with id (" + eOrder.getId() + ") started.");
+
         if (!orderState.equals(EOrder.OrderState.FINISH)) {
+            log.info("Releasing resources of order with id (" +  eOrder.getId() + ").");
+
             eOrderProductRepository.findAllByEOrder(eOrder)
                     .forEach(productService::increaseQuantity);
         }
 
         eOrder.setOrderState(orderState);
         eOrderRepository.save(eOrder);
+
+        log.info("Order with id (" + eOrder.getId() + ") closed (" + orderState + ")");
     }
 
+    @Override
     public void finishExpired(final Integer expirationTime) {
         eOrderRepository.findAllToBeSetAsExpirate(DateUtils.addMinutes(new Date(), expirationTime), EOrder.OrderState.OPEN)
                 .forEach(eOrder -> {
                     try {
                         finishOrder(eOrder, EOrder.OrderState.EXPIRED);
-                    } catch (OrderClosedException e) {
+                    } catch (OrderCannotBeClosedException e) {
                         e.printStackTrace();
                     }
                 });
 
     }
 
-    public void edit(final Long id, final Long productId, final Integer count) throws NegativeQuantityOfProductException {
-        EOrderProduct orderProduct = eOrderProductRepository.findOrderProductByRelatedProduct(id, productId).orElseThrow();
+    @Override
+    public void edit(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfProductException {
+        EOrderProduct orderProduct = eOrderProductRepository.findOrderProductByRelatedProduct(orderId, productId).orElseThrow();
         productService.editQuantity(productId, orderProduct.getQuantity() - count);
 
         orderProduct.setQuantity(count);
         eOrderProductRepository.save(orderProduct);
     }
 
+    @Override
     public void increase(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfProductException {
         Optional<EOrderProduct> orderProductOptional = eOrderProductRepository.findOrderProductByRelatedProduct(orderId, productId);
 
@@ -103,6 +121,7 @@ public class EOrderServiceV1 {
         eOrderProductRepository.save(orderProduct);
     }
 
+    @Override
     public void decrease(final Long orderId, final Long productId, final Integer count) throws NegativeQuantityOfEOrderException {
         EOrderProduct orderProduct = eOrderProductRepository.findOrderProductByRelatedProduct(orderId, productId).orElseThrow();
 
@@ -121,6 +140,13 @@ public class EOrderServiceV1 {
         eOrderProductRepository.save(orderProduct);
     }
 
+    /**
+     * Create new connection between order and product.
+     *
+     * @param orderId order id.
+     * @param productId product id.
+     * @param count quantity of product.
+     * */
     private void createOrderProduct(Long orderId, Long productId, Integer count) {
         EOrder eOrder = eOrderRepository.findById(orderId).orElseThrow();
         Product product = productRepository.findById(productId).orElseThrow();
@@ -128,12 +154,27 @@ public class EOrderServiceV1 {
         eOrderProductRepository.save(new EOrderProduct(null, count, eOrder, product));
     }
 
+    /**
+     * Map entity of order to DTO.
+     *
+     * @param eOrder entity to be mapped.
+     *
+     * @return entity as dto.
+     * */
     private EOrderDtoV1 mapTo(final EOrder eOrder) {
         return new EOrderDtoV1(eOrder.getId(), eOrder.getOrderState(), eOrder.getCreationDate());
     }
 
-    private EOrderProduct mapTo(final EOrderProductDtoV1 productDtoV1, final EOrder order) {
+    /**
+     * Map entity of order and product to DTO.
+     *
+     * @param productDtoV1 dto of product.
+     * @param eOrder entity to be mapped.
+     *
+     * @return entity as dto.
+     * */
+    private EOrderProduct mapTo(final EOrderProductDtoV1 productDtoV1, final EOrder eOrder) {
         Product product = productRepository.findById(productDtoV1.productId()).orElseThrow();
-        return new EOrderProduct(null, productDtoV1.quantity(), order, product);
+        return new EOrderProduct(null, productDtoV1.quantity(), eOrder, product);
     }
 }

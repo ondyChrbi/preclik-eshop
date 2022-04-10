@@ -7,7 +7,7 @@ import cz.preclik.shop.preclikshop.dto.EOrderProductDtoV1;
 import cz.preclik.shop.preclikshop.service.EOrderServiceV1;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfEOrderException;
 import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductException;
-import cz.preclik.shop.preclikshop.service.exception.OrderClosedException;
+import cz.preclik.shop.preclikshop.service.exception.OrderCannotBeClosedException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +34,7 @@ public class EOrderControllerV1 {
 
     @DeleteMapping("/{id}")
     @DisableEOrderEndpoint
-    public ResponseEntity disable(@PathVariable("id") final Long id) throws OrderClosedException {
+    public ResponseEntity disable(@PathVariable("id") final Long id) throws OrderCannotBeClosedException {
         eOrderService.finishOrder(id, EOrder.OrderState.CANCEL);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -42,7 +42,7 @@ public class EOrderControllerV1 {
 
     @PutMapping("/{id}/pay")
     @PayEOrderEndpoint
-    public ResponseEntity pay(@PathVariable("id") final Long id) throws OrderClosedException {
+    public ResponseEntity pay(@PathVariable("id") final Long id) throws OrderCannotBeClosedException {
         eOrderService.finishOrder(id, EOrder.OrderState.FINISH);
 
         return new ResponseEntity(HttpStatus.NO_CONTENT);
@@ -82,8 +82,8 @@ public class EOrderControllerV1 {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
     }
 
-    @ExceptionHandler(value = OrderClosedException.class)
-    private ResponseEntity<?> orderClosedHandler(final OrderClosedException exception) {
+    @ExceptionHandler(value = OrderCannotBeClosedException.class)
+    private ResponseEntity<?> orderClosedHandler(final OrderCannotBeClosedException exception) {
         return ResponseEntity.status(HttpStatus.GONE).body(exception.getMessage());
     }
 }
