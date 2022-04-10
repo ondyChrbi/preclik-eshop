@@ -7,6 +7,9 @@ import cz.preclik.shop.preclikshop.service.exception.*;
 
 import java.util.List;
 
+/**
+ * Service for creation and managing order in eshop.
+ * */
 public interface EOrderService {
     /**
      * Create new order.

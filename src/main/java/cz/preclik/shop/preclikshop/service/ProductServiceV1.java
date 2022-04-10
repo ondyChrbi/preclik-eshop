@@ -15,9 +15,6 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 
-/**
- * Service for creation and managing products in eshop.
- */
 @Service
 public class ProductServiceV1 implements ProductService {
     private final ProductRepository productRepository;

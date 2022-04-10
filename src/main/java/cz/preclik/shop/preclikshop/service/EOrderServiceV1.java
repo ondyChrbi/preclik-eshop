@@ -16,9 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * Service for creation and managing order in eshop.
- * */
 @Service
 @Slf4j
 public class EOrderServiceV1 implements EOrderService {

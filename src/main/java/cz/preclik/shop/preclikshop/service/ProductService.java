@@ -8,6 +8,9 @@ import cz.preclik.shop.preclikshop.service.exception.NegativeQuantityOfProductEx
 import org.springframework.data.domain.Pageable;
 import org.springframework.hateoas.PagedModel;
 
+/**
+ * Service for creation and managing products in eshop.
+ */
 public interface ProductService {
     /**
      * Find all products.
